@@ -10,7 +10,7 @@
 #define WRITE 1
 
 
-int pipe1[2], pipe2[2], pipe3[2], pipe4[2];
+int pipe1[2], pipe21[2], pipe3[2], pipe4[2];
 
 void err(char* msg){
 	perror(msg);
@@ -34,7 +34,7 @@ int main(int argc, char** argv, char** envp){
 	if (pipe(pipe1) == -1){
 		err("pipe1");
 	}
-	if (pipe(pipe2) == -1){
+	if (pipe(pipe21) == -1){
 		err("pipe2");
 	}
 	if (pipe(pipe3) == -1){
@@ -61,7 +61,7 @@ int main(int argc, char** argv, char** envp){
 
     		closePipe(pipe4);
     		closePipe(pipe3);
-    		closePipe(pipe2);
+    		closePipe(pipe21);
     		closePipe(pipe1);
 
     		if (execlp("printenv", "printenv", NULL) == -1){
@@ -81,17 +81,18 @@ int main(int argc, char** argv, char** envp){
 			if (dup2(pipe1[READ],STDIN_FILENO) == -1){
     				err( "dup2 p1 read" );
       			}
-      			if (dup2(pipe2[WRITE], STDOUT_FILENO) == -1){
+      			if (dup2(pipe21[WRITE], STDOUT_FILENO) == -1){
     				err("dup2 p2 write");
       			}
 
       			closePipe(pipe4);
       			closePipe(pipe3);
-      			closePipe(pipe2);
+      			closePipe(pipe21);
       			closePipe(pipe1);
 	
 			char * grepcommand[argc];
 			grepcommand[0] = "grep";
+
 			int i;
 			for(i=1; i<argc; i++) {
 				grepcommand[i] = argv[i];
@@ -100,12 +101,12 @@ int main(int argc, char** argv, char** envp){
 
 			//TODO Fixa!
 			if (argc > 1) {
-				if (execlp("grep", *grepcommand, NULL) == -1){
-    					err("execlp grep does not like you!");
-      				}
+				if (execvp("grep", grepcommand) == -1) {
+    					err("exevp went wrong (grep)");
+      			}
 			} else {
 				if (execlp("grep", "grep", ".*", NULL) == -1) {
-					err("execlp echo went wrong");
+					err("execlp grep .* went wrong");
 				}
 			}
 
@@ -122,7 +123,7 @@ int main(int argc, char** argv, char** envp){
 
 			if (sortid == 0) {
 				/* Vi är i child, dvs sort */
-				if (dup2(pipe2[READ],STDIN_FILENO) == -1){
+				if (dup2(pipe21[READ],STDIN_FILENO) == -1){
 					err( "dup2 p2 read" );
 				}
 				
@@ -132,7 +133,7 @@ int main(int argc, char** argv, char** envp){
 
 				closePipe(pipe4);
 				closePipe(pipe3);
-				closePipe(pipe2);
+				closePipe(pipe21);
 				closePipe(pipe1);
 
 				if (execlp("sort", "sort", NULL) == -1){
@@ -157,7 +158,7 @@ int main(int argc, char** argv, char** envp){
 
 					    closePipe(pipe4);
 					    closePipe(pipe3);
-					    closePipe(pipe2);
+					    closePipe(pipe21);
 					    closePipe(pipe1);
 
 
@@ -184,7 +185,7 @@ int main(int argc, char** argv, char** envp){
 
 
   	closePipe(pipe1);
-  	closePipe(pipe2);
+  	closePipe(pipe21);
   	closePipe(pipe3);
   	closePipe(pipe4);
 	waitpid(lessid, NULL, 0);
