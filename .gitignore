@@ -25,3 +25,5 @@
 # IDE specs
 *.vcxproj
 *.filters
+*.cbp
+*.depend

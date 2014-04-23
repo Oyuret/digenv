@@ -20,14 +20,14 @@ void err(char* msg){
 }
 
 /*Close the given pipe*/
-void closePipe(int pipeEnd[2]){
+void closePipe(int pipe[2]){
 
 	/*Attempt to close the READ end of the pipe*/
-	if (close(pipeEnd[READ]) == -1)
+	if (close(pipe[READ]) == -1)
 		err("error when closing pipe, read");
 
 	/*Attempt to close the WRITE end of the pipe*/
-	if (close(pipeEnd[WRITE]) == -1)
+	if (close(pipe[WRITE]) == -1)
 		err("error when closing pipe, write");
 }
 
@@ -35,6 +35,7 @@ int main(int argc, char** argv, char** envp){
 
 	/*The id's where we will store the different threads*/
 	int sortid, lessid, grepid, envpid;
+	sortid=lessid=grepid=envpid=0;
 
 
 	/* Create pipes */
@@ -50,7 +51,7 @@ int main(int argc, char** argv, char** envp){
 
 	/* forka till envp */
 	envpid = fork();
-	
+
 	/* kolla om vi lyckades */
 	if(envpid==-1) {
 		err("fork till envp misslyckades");
@@ -58,7 +59,7 @@ int main(int argc, char** argv, char** envp){
 
 	/* Main eller envp */
 	if(envpid == 0) {
-	
+
 		/* vi är child, dvs envp */
 		if (dup2(pipeEnvToGrep[WRITE],STDOUT_FILENO)== -1){
       			err("dup2 failed (Env -> Grep write)");
@@ -73,13 +74,13 @@ int main(int argc, char** argv, char** envp){
     		if (execlp("printenv", "printenv", NULL) == -1){
       			err("execlp printenv failed miserably");
     		}
-			
+
 	} else {
-	
+
 		/* Vi är main */
-		
+
 		grepid = fork();
-		
+
 		/*Did we manage to fork?*/
 		if (grepid == -1) {
 			err("fork till grep misslyckades");
@@ -93,7 +94,7 @@ int main(int argc, char** argv, char** envp){
 			if (dup2(pipeEnvToGrep[READ],STDIN_FILENO) == -1) {
     				err( "dup2 failed (Env -> Grep read)" );
       		}
-      		
+
 			/*Let Grep write to the pipe going to sort*/
 			if (dup2(pipeGrepToSort[WRITE], STDOUT_FILENO) == -1) {
     				err("dup2 failed (Grep -> Sort write)");
@@ -103,10 +104,10 @@ int main(int argc, char** argv, char** envp){
       		closePipe(pipeSortToLess);
       		closePipe(pipeGrepToSort);
       		closePipe(pipeEnvToGrep);
-	
+
 			/*We need a parameter list to send to grep*/
 			char * grepcommand[argc];
-			
+
 			/*Add grep as the first parameter*/
 			grepcommand[0] = "grep";
 
@@ -114,27 +115,27 @@ int main(int argc, char** argv, char** envp){
 			int i;
 			for(i=1; i<argc; i++) {
 				grepcommand[i] = argv[i];
-			}		
-			
+			}
+
 
 			/*Check if we actually got any parameters from the digenv call*/
 			if (argc > 1) {
-				
+
 				/*We have parameters, call grep with those*/
 				if (execvp("grep", grepcommand) == -1) {
     					err("exevp went wrong (grep)");
       			}
-				
+
 			} else {
-			
+
 				/*No parameters to send. Just let grep grab everything*/
 				if (execlp("grep", "grep", ".*", NULL) == -1) {
 					err("execlp grep .* went wrong");
 				}
-				
+
 			}
 
-      			
+
 
 		} else {
 			/* Vi är i main/parent */
@@ -147,14 +148,14 @@ int main(int argc, char** argv, char** envp){
 			}
 
 			if (sortid == 0) {
-			
+
 				/* Vi är i child, dvs sort */
-				
+
 				/*Let sort read from the pipe coming from Grep*/
 				if (dup2(pipeGrepToSort[READ],STDIN_FILENO) == -1){
 					err( "dup2 failed (Grep -> Sort read)" );
 				}
-				
+
 				/*Let sort write to the pipe going to less*/
 				if (dup2(pipeSortToLess[WRITE], STDOUT_FILENO) == -1){
 					err("dup2 failed (Sort -> Less write)");
@@ -173,7 +174,7 @@ int main(int argc, char** argv, char** envp){
 			} else {
 				/* Vi är i parent */
 				lessid = fork();
-				
+
 				/*Did we manage to fork?*/
 				if (lessid == -1) {
 					err("failed to fork to less");
@@ -210,17 +211,17 @@ int main(int argc, char** argv, char** envp){
 
 
 		}
-		
-		
+
+
 	}
-	
+
 	/*Close the pipes not used*/
   	closePipe(pipeSortToLess);
 	closePipe(pipeGrepToSort);
 	closePipe(pipeEnvToGrep);
-	
+
 	/*Wait for less to be done*/
-	waitpid(lessid, NULL, 0);
+	if(lessid!=0) waitpid(lessid, NULL, 0);
 
 	return 0;
 }
