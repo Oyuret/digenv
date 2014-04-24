@@ -15,7 +15,7 @@
  * EXAMPLES:
  *   digenv
  *   digenv PATH
- *   digenv P.+T 
+ *   digenv P.*T 
  * 
  * AUTHOR:
  *   Johan Storby, Yuri Stange, 2014
