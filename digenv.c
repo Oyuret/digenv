@@ -1,3 +1,9 @@
+/**
+ * En längre kommentar
+ * Vet inte riktigt vad man bör skriva här
+ * Men fint blir det iaf!
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,7 +41,7 @@ int main(int argc, char** argv, char** envp){
 
 	/*The id's where we will store the different threads*/
 	int sortid, lessid, grepid, envpid;
-	sortid=lessid=grepid=envpid=0;
+	sortid=lessid=grepid=envpid=-1;
 
 
 	/* Create pipes */
@@ -106,7 +112,7 @@ int main(int argc, char** argv, char** envp){
       		closePipe(pipeEnvToGrep);
 
 			/*We need a parameter list to send to grep*/
-			char * grepcommand[argc];
+			char * grepcommand[argc+1];
 
 			/*Add grep as the first parameter*/
 			grepcommand[0] = "grep";
@@ -116,6 +122,9 @@ int main(int argc, char** argv, char** envp){
 			for(i=1; i<argc; i++) {
 				grepcommand[i] = argv[i];
 			}
+
+			/*NULL terminate it*/
+			grepcommand[argc] = NULL;
 
 
 			/*Check if we actually got any parameters from the digenv call*/
@@ -221,7 +230,7 @@ int main(int argc, char** argv, char** envp){
 	closePipe(pipeEnvToGrep);
 
 	/*Wait for less to be done*/
-	if(lessid!=0) waitpid(lessid, NULL, 0);
+	waitpid(lessid, NULL, 0);
 
 	return 0;
 }
