@@ -1,10 +1,28 @@
 /**
- * digenv.c
- * Johan Storby, Yuri Stange, 2014
+ * NAME:
+ *   digenv - for browsing environment variables
+ * 
+ * SYNTAX:
+ *   digenv [PARAMETERS]
  *
- * Enkel implementation av digenv. Rättfram imperativ variant. Skapar 3 pipes för
- * kommunikation mellan de 4 olika delarna. Varje del körs i en fork, och de olika 
- * delarna använder sina pipes mellan varanda för att skicka data.
+ * DESCRIPTION:
+ *  The digenv program is a way of listing environment variables.
+ *  It works as an alias of 
+ *       printenv | grep PARAMETERS | sort | less
+ *  If no parameters are given it works as an alias of
+ *       printenv | sort | less
+ *
+ * EXAMPLES:
+ *   digenv
+ *   digenv PATH
+ *   digenv P.+T 
+ * 
+ * AUTHOR:
+ *   Johan Storby, Yuri Stange, 2014
+ *
+ * SEE ALSO:
+ * printenv(1), grep(1), sort(1), less(1)
+ *
  */
 
 #include <stdio.h>
